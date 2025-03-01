@@ -1,0 +1,87 @@
+---
+title: "Assignment 4- Running Forecast Models on Your Time Series"
+author: "Kayla Lindsley"
+date: "2025-02-28"
+output: html_document
+---
+
+```{r}
+library(forecast)
+
+# load in the data
+unemployment_rate_data <- read.csv("/Users/kaylalindsley/Desktop/Junior\ Yr/Semester\ 2/Time\ Series/Assignment\ 4/unemployment_rate_data.csv", header = TRUE)
+
+# converting unemployment_rate_data$unrate into time series model(monthly)
+date <- as.Date(unemployment_rate_data$date, format = "%m/%d/%Y")
+ts_unrate <- ts(unemployment_rate_data$unrate, start = c(1948, 01), frequency = 12)
+
+
+# exploratory analysis 
+# plot 
+plot(ts_unrate, type = "l", xlab = "Time", ylab = "Unemployment Rate", main = "Unemployment Rate Over Time")
+# Observations: From the seasonally unadjusted unemployment rate data we can see an obvious oscillation within the graph where there are peaks and troughs. The rate increased slightly overall for all data points in the set. We can also see an abnormal spike in the unemployment rate at around 2020.  
+     
+# ACF
+acf(ts_unrate, main = "ACF of Unemployment Rate")
+# Observations: From the ACF graph we can see that none of the lags fall within the band of insignificance. There is a positive correlation between with an overall decrease in the ACF over each lag.
+
+# decomp
+ets_unrate <- ets(ts_unrate)
+plot(ets_unrate)
+attributes(ets_unrate)
+ets_unrate$mse
+# Observations: From the decomposition of the Unemployment Data Set we can see that the overall data oscillates and contains seasonality as there are peaks followed by troughs. While level slightly increases over the entirety of the data. Seasonality has a large amplitude that decreases slightly as time goes on, since it's amplitude is quite large it has a significant impact on the data. 
+
+
+# time series & diff forecasts 
+# forecasts
+# mean forecast
+mean_unrate <- meanf(ts_unrate,12)
+plot(mean_unrate)
+
+# naive forecast 
+naive_unrate <- naive(ts_unrate,12)
+plot(naive_unrate)
+
+# random walk 
+rwf_unrate <- rwf(ts_unrate,12)
+plot(rwf_unrate)
+rwf_unrate
+
+# seasonal naive
+snaive_unrate <- snaive(ts_unrate,12)
+plot(snaive_unrate)
+
+# moving average
+MA12_unrate <- ma(ts_unrate,order=12)
+plot(MA12_unrate)
+
+MA24_unrate <- ma(ts_unrate,order=24)
+plot(MA24_unrate)
+
+# holt winters
+HW_unrate <- HoltWinters(ts_unrate)
+plot(HW_unrate)
+
+
+# all on 1 graph
+plot(ts_unrate, main = "Time Series and Forecasts", xlab = "Time", ylab = "Unemployment Rate")
+lines(mean_unrate$mean, col = "orange")
+lines(naive_unrate$mean, col = "red")
+lines(rwf_unrate$mean, col = "green")
+lines(snaive_unrate$mean, col = "purple")
+lines(MA12_unrate, col = "blue")
+lines(MA24_unrate, col = "turquoise")
+lines(HW_unrate$mean, col = "pink")
+
+# best model
+# MAPE
+accuracy(mean_unrate)
+accuracy(naive_unrate)
+accuracy(rwf_unrate)
+accuracy(rwf_unrate)
+accuracy(snaive_unrate)
+accuracy(forecast(MA12_unrate, h=12))
+accuracy(forecast(MA24_unrate, h=24))
+accuracy(forecast(HW_unrate, h=12))
+# Comparing the MAPEs of all the models we can conclude that the best model is the moving average over 24 months with a mean average percent errror of 0.1528. This means the MA24 model is able to forecast future data with only a 0.1528 error. 
